@@ -30,6 +30,7 @@ library:
 
 executables:
   hylide:
+    ghc-options: [-threaded]
     main: Main.hs
     source-dirs: app
     other-extensions:

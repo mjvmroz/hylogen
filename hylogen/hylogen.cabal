@@ -1,8 +1,10 @@
--- This file has been generated from package.yaml by hpack version 0.28.2.
+cabal-version: 1.12
+
+-- This file has been generated from package.yaml by hpack version 0.37.0.
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: c73e67718fed614dd2b7acdcc59eae74f0e61bdb48343249f4c53ca2e50bb720
+-- hash: 21c164d292fc6c0ac831a51f2912de1dd5018104dc339eb514c13298191db351
 
 name:           hylogen
 version:        0.1.5.1
@@ -14,7 +16,6 @@ author:         Sean Lee
 maintainer:     freshdried@gmail.com
 license:        MIT
 build-type:     Simple
-cabal-version:  >= 1.10
 extra-source-files:
     README.md
 

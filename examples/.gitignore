@@ -1,0 +1,7 @@
+dist/
+TAGS
+.stack-work/
+src/*.hs
+shader.glsl
+core
+**/*.cabal

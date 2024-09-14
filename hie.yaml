@@ -1,0 +1,19 @@
+cradle:
+  stack:
+    - path: "examples/./"
+      component: "examples:lib"
+
+    - path: "examples/./"
+      component: "examples:lib"
+
+    - path: "hylide/src"
+      component: "hylide:lib"
+
+    - path: "hylide/app/Main.hs"
+      component: "hylide:exe:hylide"
+
+    - path: "hylide/app/Paths_hylide.hs"
+      component: "hylide:exe:hylide"
+
+    - path: "hylogen/src"
+      component: "hylogen:lib"

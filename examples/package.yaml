@@ -1,0 +1,23 @@
+name: examples
+source-dirs:
+ - ./src
+dependencies:
+ - base
+ - hylide
+ - hylogen
+ - vector-space
+ - profunctors
+ - lens
+library: {}
+default-extensions:
+  - DataKinds
+  - FlexibleContexts
+  - FlexibleInstances
+  - GADTs
+  - GeneralizedNewtypeDeriving
+  - MultiParamTypeClasses
+  - OverloadedStrings
+  - RankNTypes
+  - ScopedTypeVariables
+  - TypeFamilies
+  - TypeOperators
