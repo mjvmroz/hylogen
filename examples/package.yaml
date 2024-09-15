@@ -10,6 +10,7 @@ dependencies:
  - lens
  - containers
  - nonempty-containers
+ - Boolean
 library: {}
 default-extensions:
   - FlexibleContexts
