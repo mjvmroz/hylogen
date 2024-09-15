@@ -1,43 +1,43 @@
-{-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE LambdaCase #-}
-{-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE DeriveAnyClass #-}
+{-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE ImportQualifiedPost #-}
+{-# LANGUAGE LambdaCase #-}
+{-# LANGUAGE OverloadedStrings #-}
 
-
+import Control.Concurrent (forkIO, killThread)
+import Control.Monad (void)
+import Data.Aeson (FromJSON, ToJSON, encode)
+import Data.ByteString.Lazy.Char8 qualified as LBS8
+import GHC.Generics (Generic)
 import Paths_hylide (getDataFileName)
-import Control.Concurrent
-import Control.Monad
-import Data.Aeson
-import GHC.Generics
-import qualified Data.ByteString.Lazy.Char8 as LBS8
 
-import qualified Data.Text as T
-import qualified Network.WebSockets as S
-import System.Environment (getArgs)
-import System.FilePath
+import Data.Text qualified as T
+import Network.WebSockets qualified as S
+import System.Environment qualified as Env
+import System.Exit (ExitCode (ExitFailure, ExitSuccess))
 import System.FSNotify
-import System.Process
-import System.Exit (ExitCode(ExitFailure, ExitSuccess))
+import System.FilePath
 
+import Network.HTTP.Types (status200, status404)
 import Network.Wai
 import Network.Wai.Handler.Warp
-import Network.HTTP.Types (status200, status404)
 
-import qualified Language.Haskell.Interpreter as I
-import qualified Control.Exception as E
+import Control.Exception qualified as E
+import Data.Functor
+import Language.Haskell.Interpreter qualified as I
 
-
-data Msg = Err String
-         | Code String
-         deriving (Show, Generic, ToJSON, FromJSON)
+data Msg
+  = Err String
+  | Code String
+  deriving (Show, Generic, ToJSON, FromJSON)
 
 main :: IO ()
 main = do
-  getArgs >>= \case
+  Env.getArgs >>= \case
     [pathToWatch] -> main' pathToWatch
     _ -> error "Error: Name a file to watch!"
 
-main' :: FilePath ->  IO ()
+main' :: FilePath -> IO ()
 main' pathToWatch = do
   tid1 <- forkIO serveIndex
   tid2 <- forkIO $ serveGLSL pathToWatch
@@ -46,34 +46,32 @@ main' pathToWatch = do
   killThread tid1
   killThread tid2
 
-
-
 serveGLSL :: FilePath -> IO ()
 serveGLSL pathToWatch = do
-  withManager
-    $ S.runServer "127.0.0.1" 8080
-    . handleConnection pathToWatch
+  withManager $
+    S.runServer "127.0.0.1" 8080
+      . handleConnection pathToWatch
   return ()
 
 handleConnection :: FilePath -> WatchManager -> S.PendingConnection -> IO ()
 handleConnection pathToWatch mgr pending = do
-   let (dirToWatch, _) = splitFileName pathToWatch
-   connection <- S.acceptRequest pending
+  let (dirToWatch, _) = splitFileName pathToWatch
+  connection <- S.acceptRequest pending
 
-   -- let send = sendTextData connection . T.pack
-   let send = S.sendTextData connection
-   let update = do
-         msg <- getCodeOrError pathToWatch
-         send . encode $ msg
+  -- let send = sendTextData connection . T.pack
+  let send = S.sendTextData connection
+  let update = do
+        msg <- getCodeOrError pathToWatch
+        send . encode $ msg
 
-   let onChange e = do
-         case e of
-           Modified _ _ _ -> update
-           _ -> return ()
-   update
-   _ <- watchDir mgr dirToWatch (const True) onChange
-   _ <- getLine -- temp hack to keep the socket open
-   return ()
+  let onChange e = do
+        case e of
+          Modified{} -> update
+          _ -> return ()
+  update
+  _ <- watchDir mgr dirToWatch (const True) onChange
+  _ <- getLine -- temp hack to keep the socket open
+  return ()
 
 interp :: FilePath -> I.InterpreterT IO String
 interp fp = do
@@ -83,13 +81,14 @@ interp fp = do
 
 getCodeOrError :: FilePath -> IO Msg
 getCodeOrError path = do
-  I.runInterpreter (interp path) >>= return . \case
-    Left err -> case err of
-      I.UnknownError str -> Err str
-      I.WontCompile errors -> Err . mconcat $ I.errMsg <$> errors
-      I.NotAllowed str -> Err str
-      I.GhcException str -> Err str
-    Right str -> Code str
+  I.runInterpreter (interp path)
+    <&> \case
+      Left err -> case err of
+        I.UnknownError str -> Err str
+        I.WontCompile errors -> Err . mconcat $ I.errMsg <$> errors
+        I.NotAllowed str -> Err str
+        I.GhcException str -> Err str
+      Right str -> Code str
 
 -- getCodeOrError' :: FilePath -> IO Msg
 -- getCodeOrError' pathToWatch = do
@@ -111,21 +110,22 @@ serveIndex = do
   jsString <- readFile =<< getDataFileName "client/dist-local/bundle.js"
   run port $ app htmlString jsString
 
-
 app :: String -> String -> Application
 app htmlString jsString req respond = respond $
   case pathInfo req of
     ["bundle.js"] -> serveJS jsString
-    []           -> serveHTML htmlString
-    _            -> error404
+    [] -> serveHTML htmlString
+    _ -> error404
 
 serveHTML :: String -> Network.Wai.Response
-serveHTML htmlString = responseLBS status200 [("Content-Type", "text/html")]
-  $ LBS8.pack htmlString
+serveHTML htmlString =
+  responseLBS status200 [("Content-Type", "text/html")] $
+    LBS8.pack htmlString
 
 serveJS :: String -> Network.Wai.Response
-serveJS jsString = responseLBS status200 [("Content-Type", "application/javascript")] 
-  $ LBS8.pack jsString
+serveJS jsString =
+  responseLBS status200 [("Content-Type", "application/javascript")] $
+    LBS8.pack jsString
 
 error404 :: Network.Wai.Response
 error404 = responseBuilder status404 [("Content-Type", "text/plain")] "404 - Not Found"

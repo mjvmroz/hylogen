@@ -8,9 +8,10 @@ dependencies:
  - vector-space
  - profunctors
  - lens
+ - containers
+ - nonempty-containers
 library: {}
 default-extensions:
-  - DataKinds
   - FlexibleContexts
   - FlexibleInstances
   - GADTs
@@ -21,3 +22,4 @@ default-extensions:
   - ScopedTypeVariables
   - TypeFamilies
   - TypeOperators
+  - ImportQualifiedPost

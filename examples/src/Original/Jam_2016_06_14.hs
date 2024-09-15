@@ -7,8 +7,6 @@ import Hylogen.WithHylide
 
 output = toProgram noisyink
 
-(?) :: (ToGLSLType a) => Booly -> (Expr a, Expr a) -> Expr a
-b ? (x, y) = sel b x y
 (<&>) = flip fmap
 
 rot :: Vec1 -> Vec2 -> Vec2

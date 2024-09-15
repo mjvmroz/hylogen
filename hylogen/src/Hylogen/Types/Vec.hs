@@ -1,24 +1,21 @@
+{-# LANGUAGE ConstraintKinds #-}
+{-# LANGUAGE DataKinds #-}
+{-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE GADTs #-}
+{-# LANGUAGE InstanceSigs #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TypeFamilies #-}
-{-# LANGUAGE DataKinds #-}
-{-# LANGUAGE LambdaCase #-}
-{-# LANGUAGE TypeSynonymInstances #-}
-{-# LANGUAGE FlexibleInstances #-}
-{-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE TypeOperators #-}
-{-# LANGUAGE ConstraintKinds #-}
-{-# LANGUAGE MultiParamTypeClasses #-}
-{-# LANGUAGE InstanceSigs #-}
-
 
 module Hylogen.Types.Vec where
 
-import GHC.TypeLits
 import Data.VectorSpace
+import GHC.TypeLits
 
+import GHC.Records
 import Hylogen.Expr
-
 
 -- | Floating vector singleton type tag
 data FloatVec (n :: Nat) where
@@ -26,6 +23,7 @@ data FloatVec (n :: Nat) where
 
 -- | Hylogen floating-point Vector type
 type Vec n = Expr (FloatVec n)
+
 type Vec1 = Vec 1
 type Vec2 = Vec 2
 type Vec3 = Vec 3
@@ -44,21 +42,19 @@ instance ToGLSLType (FloatVec 4) where
   toGLSLType _ = GLSLVec4
   tag = FloatVec
 
-
-
 -- | A Nat is veccable if it can be the dimension of a GLSL vector
 class (ToGLSLType (FloatVec n), KnownNat n) => Veccable n where
   -- | Creates a Vec n from a Vec1
   copy :: Vec1 -> Vec n
+
   -- | Transforms a Vec n into a list of Vec1's
   toList :: Vec n -> [Vec1]
-
 
 instance Veccable 1 where
   copy = id
   toList v = [v]
 instance Veccable 2 where
-  copy v = op2pre' "vec2" v v 
+  copy v = op2pre' "vec2" v v
   toList v = [x_ v, y_ v]
 instance Veccable 3 where
   copy v = op3pre' "vec3" v v v
@@ -66,8 +62,6 @@ instance Veccable 3 where
 instance Veccable 4 where
   copy v = op4pre' "vec4" v v v v
   toList v = [x_ v, y_ v, z_ v]
-
-
 
 instance (Veccable n) => Num (Vec n) where
   (+) = op2' "+"
@@ -77,7 +71,6 @@ instance (Veccable n) => Num (Vec n) where
   signum = op1pre "sign"
   negate = op1 "-"
   fromInteger x = copy . uniform . show $ (fromInteger x :: Float)
-
 
 instance (Veccable n) => Fractional (Vec n) where
   (/) = op2' "/"
@@ -97,34 +90,30 @@ instance (Veccable n) => Floating (Vec n) where
   acos = op1pre "acos"
   atan = op1pre "atan"
   sinh x = (exp x - exp (negate x)) / 2
-  cosh x = (exp x + exp (negate x))/2
+  cosh x = (exp x + exp (negate x)) / 2
   tanh x = sinh x / cosh x
-  asinh x = log $ x + sqrt(x**2 + 1)
-  acosh x = log $ x + sqrt(x**2 - 1)
-  atanh x = 0.5 * log ((1 + x)/(1 - x))
+  asinh x = log $ x + sqrt (x ** 2 + 1)
+  acosh x = log $ x + sqrt (x ** 2 - 1)
+  atanh x = 0.5 * log ((1 + x) / (1 - x))
 
-instance Veccable n => AdditiveGroup (Vec n) where
+instance (Veccable n) => AdditiveGroup (Vec n) where
   zeroV = 0
   (^+^) = (+)
   negateV = negate
   (^-^) = (-)
 
-instance Veccable n => VectorSpace (Vec n) where
+instance (Veccable n) => VectorSpace (Vec n) where
   type Scalar (Vec n) = Vec 1
   a *^ b = copy a * b
 
-instance Veccable n => InnerSpace (Vec n) where
+instance (Veccable n) => InnerSpace (Vec n) where
   a <.> b = Expr fv (Tree (Op2Pre, GLSLFloat, "dot") (fmap toMono [a, b]))
-    where fv = FloatVec :: FloatVec 1
-
-
-  
-
+   where
+    fv = FloatVec :: FloatVec 1
 
 -- | Exposed constructor for making vec2's
 vec2 :: (Vec1, Vec1) -> Vec2
 vec2 (x, y) = op2pre' "vec2" x y
-
 
 class ToVec3 tuple where
   -- | Exposed constructor for making vec3's
@@ -132,46 +121,50 @@ class ToVec3 tuple where
 
 instance (a ~ Vec m, b ~ Vec (3 - m)) => ToVec3 (a, b) where
   vec3 (x, y) = Expr fv (Tree (Op2Pre, toGLSLType fv, "vec3") [toMono x, toMono y])
-      where fv = FloatVec :: FloatVec 3
+   where
+    fv = FloatVec :: FloatVec 3
 
 instance (a ~ Vec1, b ~ Vec1, c ~ Vec1) => ToVec3 (a, b, c) where
   vec3 (x, y, z) = Expr fv (Tree (Op3Pre, toGLSLType fv, "vec3") (fmap toMono [x, y, z]))
-      where fv = FloatVec :: FloatVec 3
-
+   where
+    fv = FloatVec :: FloatVec 3
 
 class ToVec4 tuple where
   -- | Exposed constructor for making vec4's
   vec4 :: tuple -> Vec4
 
 instance (a ~ Vec m, b ~ Vec (4 - m)) => ToVec4 (a, b) where
-  vec4 (x, y) = Expr fv (Tree (Op2Pre, toGLSLType fv, "vec4") [toMono x,toMono y])
-      where fv = FloatVec :: FloatVec 4
+  vec4 (x, y) = Expr fv (Tree (Op2Pre, toGLSLType fv, "vec4") [toMono x, toMono y])
+   where
+    fv = FloatVec :: FloatVec 4
 
-instance {-#INCOHERENT#-} (b ~ Vec1, c ~ Vec1) => ToVec4 (Vec2, b, c) where
-  vec4 (x, y, z) = Expr fv (Tree (Op3Pre, toGLSLType fv, "vec4") [toMono x,toMono y,toMono z])
-      where fv = FloatVec :: FloatVec 4
+instance {-# INCOHERENT #-} (b ~ Vec1, c ~ Vec1) => ToVec4 (Vec2, b, c) where
+  vec4 (x, y, z) = Expr fv (Tree (Op3Pre, toGLSLType fv, "vec4") [toMono x, toMono y, toMono z])
+   where
+    fv = FloatVec :: FloatVec 4
 
-instance {-#INCOHERENT#-} (a ~ Vec1, c ~ Vec1) => ToVec4 (a, Vec2, c) where
-  vec4 (x, y, z) = Expr fv (Tree (Op3Pre, toGLSLType fv, "vec4") [toMono x,toMono y,toMono z])
-      where fv = FloatVec :: FloatVec 4
+instance {-# INCOHERENT #-} (a ~ Vec1, c ~ Vec1) => ToVec4 (a, Vec2, c) where
+  vec4 (x, y, z) = Expr fv (Tree (Op3Pre, toGLSLType fv, "vec4") [toMono x, toMono y, toMono z])
+   where
+    fv = FloatVec :: FloatVec 4
 
-instance {-#INCOHERENT#-} (a ~ Vec1, b ~ Vec1) => ToVec4 (a, b, Vec2) where
-  vec4 (x, y, z) = Expr fv (Tree (Op3Pre, toGLSLType fv, "vec4") [toMono x,toMono y,toMono z])
-      where fv = FloatVec :: FloatVec 4
-
+instance {-# INCOHERENT #-} (a ~ Vec1, b ~ Vec1) => ToVec4 (a, b, Vec2) where
+  vec4 (x, y, z) = Expr fv (Tree (Op3Pre, toGLSLType fv, "vec4") [toMono x, toMono y, toMono z])
+   where
+    fv = FloatVec :: FloatVec 4
 
 instance (a ~ Vec1, b ~ Vec1, c ~ Vec1, d ~ Vec1) => ToVec4 (a, b, c, d) where
   vec4 (x, y, z, w) = Expr fv (Tree (Op4Pre, toGLSLType fv, "vec4") (fmap toMono [x, y, z, w]))
-      where fv = FloatVec :: FloatVec 4
-
+   where
+    fv = FloatVec :: FloatVec 4
 
 type (>=) x y = (x + 1 <=? y) ~ 'False
 
 -- | Makes swizzle functions. Uses GenSwizz.hs to generate the following 340 swizzle expressions.
 mkSwizz :: forall n m. (Veccable n, Veccable m) => String -> Vec n -> Vec m
 mkSwizz str v = Expr fv (Tree (Access, toGLSLType fv, str) [toMono v])
-  where
-    fv = FloatVec :: FloatVec m
+ where
+  fv = FloatVec :: FloatVec m
 
 xxxx_ :: forall n. (Veccable n, n >= 2) => Vec n -> Vec 4
 xxxx_ = mkSwizz "xxxx"
@@ -1193,4 +1186,18 @@ ww_ = mkSwizz "ww"
 w_ :: forall n. (Veccable n, n >= 4) => Vec n -> Vec 1
 w_ = mkSwizz "w"
 
+instance (Veccable n, n >= 2) => HasField "x" (Vec n) (Vec 1) where
+  getField :: (Veccable n, n >= 2) => Vec n -> Vec 1
+  getField = x_
 
+instance (Veccable n, n >= 2) => HasField "y" (Vec n) (Vec 1) where
+  getField :: (Veccable n, n >= 2) => Vec n -> Vec 1
+  getField = y_
+
+instance (Veccable n, n >= 3) => HasField "z" (Vec n) (Vec 1) where
+  getField :: (Veccable n, n >= 3) => Vec n -> Vec 1
+  getField = z_
+
+instance (Veccable n, n >= 4) => HasField "w" (Vec n) (Vec 1) where
+  getField :: (Veccable n, n >= 4) => Vec n -> Vec 1
+  getField = w_

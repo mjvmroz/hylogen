@@ -1,13 +1,13 @@
-{-# LANGUAGE NoMonomorphismRestriction #-}
+{-# LANGUAGE DataKinds #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE ScopedTypeVariables #-}
-{-# LANGUAGE DataKinds #-}
+{-# LANGUAGE TypeOperators #-}
+{-# LANGUAGE NoMonomorphismRestriction #-}
 
 module Hylogen.Globals where
 
-import Hylogen.Types
 import Hylogen.Expr
-
+import Hylogen.Types
 
 -- | Length of a vector
 len :: forall n. (Veccable n) => Vec n -> Vec1
@@ -23,32 +23,37 @@ cross = op2pre'' "cross"
 normalize :: forall n. (Veccable n) => Vec n -> Vec n
 normalize = op1pre'' "normalize"
 
--- | Returns a vector pointing in the same direction as another
---
--- @
--- faceforward toOrient incident reference  -- == oriented
--- @
+smoothstep :: Vec1 -> Vec1 -> Vec1 -> Vec1
+smoothstep = op3pre'' "smoothstep"
+
+{- | Returns a vector pointing in the same direction as another
+
+@
+faceforward toOrient incident reference  -- == oriented
+@
+-}
 faceForward :: forall n. (Veccable n) => Vec n -> Vec n -> Vec n -> Vec n
 faceForward = op3pre'' "faceforward"
 
--- | Calculates the reflection direction for an incident vector
---
--- @
--- reflect incident normal -- == reflected
--- @
+{- | Calculates the reflection direction for an incident vector
+
+@
+reflect incident normal -- == reflected
+@
+-}
 reflect :: forall n. (Veccable n) => Vec n -> Vec n -> Vec n
 reflect = op2pre'' "reflect"
 
--- | Calculates the refraction direction direction for an incident vector
---
--- @
--- refract incident normal eta -- == reflected
--- @
---
--- where eta is the ratio of indicies of refraction
+{- | Calculates the refraction direction direction for an incident vector
+
+@
+refract incident normal eta -- == reflected
+@
+
+where eta is the ratio of indicies of refraction
+-}
 refract :: forall n. (Veccable n) => Vec n -> Vec n -> Vec1 -> Vec n
 refract = op3pre "refract"
-
 
 inverseSqrt :: forall n. (Veccable n) => Vec n -> Vec n
 inverseSqrt = op1pre'' "inversesqrt"
@@ -60,7 +65,7 @@ fract = op1pre'' "fract"
 mod_ :: forall n. (Veccable n) => Vec n -> Vec n -> Vec n
 mod_ = op2pre'' "mod"
 
-floor_:: forall n. (Veccable n) => Vec n -> Vec n
+floor_ :: forall n. (Veccable n) => Vec n -> Vec n
 floor_ = op1pre'' "floor"
 
 ceil_ :: forall n. (Veccable n) => Vec n -> Vec n
@@ -72,25 +77,23 @@ min_ = op2pre'' "min"
 max_ :: forall n. (Veccable n) => Vec n -> Vec n -> Vec n
 max_ = op2pre'' "max"
 
--- | Clamps x between min and max
---
--- @
--- clamp min max x -- == clamped
--- @
+{- | Clamps x between min and max
+
+@
+clamp min max x -- == clamped
+@
+-}
 clamp :: forall n. (Veccable n) => Vec n -> Vec n -> Vec n -> Vec n
 clamp mn mx x = op3pre'' "clamp" x mn mx
 
+{- | Linear interpolation between x and y by p, a Vec1 from 0 to 1
 
-
-
-
--- | Linear interpolation between x and y by p, a Vec1 from 0 to 1
---
--- @
--- mix p x y = x ^* (1 - p) + y ^* p
--- -- mix 0 x y == x
--- -- mix 1 x y == y
--- @
+@
+mix p x y = x ^* (1 - p) + y ^* p
+-- mix 0 x y == x
+-- mix 1 x y == y
+@
+-}
 mix :: (Veccable n) => Vec1 -> Vec n -> Vec n -> Vec n
 mix p x y = op3pre "mix" x y p
 
@@ -122,19 +125,44 @@ leq = bcomp "<="
 geq :: (Veccable v) => Vec v -> Vec v -> Booly
 geq = bcomp ">="
 
--- | Returns rgba value given a texture and texture coordinates
--- texture coordinates start at 0 1
+{- | Returns rgba value given a texture and texture coordinates
+texture coordinates start at 0 1
+-}
 texture2D :: Texture -> Vec2 -> Vec4
 texture2D = op2pre "texture2D"
 
--- | Selection function
---
--- @ sel bool x y @
--- is akin to
---
--- @ bool ? x : y @ in C-like languages
-sel :: forall a
-          . (ToGLSLType a)
-          => Booly -> Expr a -> Expr a -> Expr a
+{- | Selection function
+
+@ sel bool x y @
+is akin to
+
+@ bool ? x : y @ in C-like languages
+-}
+sel ::
+  forall a.
+  (ToGLSLType a) =>
+  Booly ->
+  Expr a ->
+  Expr a ->
+  Expr a
 sel a b c = Expr t (Tree (Select, toGLSLType t, "") [toMono a, toMono b, toMono c])
-  where t = tag :: a
+ where
+  t = tag :: a
+
+------------------------------------------------------------
+
+{- | Conditional expressions
+  Syntax sugar for `sel`:
+  `cond ? ifTrue :? ifFalse`
+-}
+(?) :: (ToGLSLType a, Expr a ~ e) => Booly -> (e, e) -> e
+cond ? (ifTrue, ifFalse) = sel cond ifTrue ifFalse
+
+and_ :: Booly -> Booly -> Booly
+and_ = op2' "&&"
+
+or_ :: Booly -> Booly -> Booly
+or_ = op2' "||"
+
+not_ :: Booly -> Booly
+not_ = op1 "!"

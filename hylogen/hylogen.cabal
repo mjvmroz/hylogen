@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 21c164d292fc6c0ac831a51f2912de1dd5018104dc339eb514c13298191db351
+-- hash: d1725ed4c9c1708c942ce922502b0675e82e1ead001f1004c9e426dd5627eb3d
 
 name:           hylogen
 version:        0.1.5.1
@@ -23,7 +23,8 @@ library
   hs-source-dirs:
       src
   build-depends:
-      base >=4.8 && <5
+      Boolean
+    , base >=4.8 && <5
     , data-reify
     , vector-space
   exposed-modules:

@@ -23,9 +23,6 @@ view l = runForget (l (Forget id))
 
 type Image = Vec2 -> Vec4
 
-(?) :: (ToGLSLType a) => Booly -> (Expr a, Expr a) -> Expr a
-(?) c (a, b) = sel c a b
-
 bw :: Vec1 -> Vec4
 bw v = vec4 (v, v, v, 1)
 

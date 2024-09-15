@@ -8,19 +8,20 @@ import Original.Util
 
 output = toProgram (spirangle osc1)
 
+spirangle :: Vec1 -> Vec4
 spirangle draw = rgba
  where
   rgba =
-    (line)
-      & (over (b2a bb))
-      & (clamp 0 1)
+    line
+      & over (b2a bb)
+      & clamp 0 1
 
   bb = q (texture2D backBuffer) uvN
 
   q x =
     x
       & lmap (view norm)
-      & lmap (rot ((negate 2 * pi / 3) + muchless sin time))
+      & lmap (rot (negate 2 * pi / 3 + muchless sin time))
       & lmap (* 1.1)
       & rmap (clamp 0 1)
 
@@ -34,6 +35,6 @@ spirangle draw = rgba
   line = vec4 (v, v, v, 1)
   v =
     1
-      & (* (gate (-0.35) (-0.33) (y_ uvN)))
-      & (* (gate (-0.55) (0.65) (x_ uvN)))
+      & (* gate (-0.35) (-0.33) (y_ uvN))
+      & (* gate (-0.55) 0.65 (x_ uvN))
       & (* draw)
