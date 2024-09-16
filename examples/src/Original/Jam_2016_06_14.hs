@@ -1,4 +1,7 @@
 {-# LANGUAGE GADTs #-}
+{-# OPTIONS_GHC -Wno-unrecognised-pragmas #-}
+
+{-# HLINT ignore "Redundant bracket" #-}
 
 module Original.Jam_2016_06_14 where
 
@@ -12,7 +15,7 @@ output = toProgram noisyink
 rot :: Vec1 -> Vec2 -> Vec2
 rot phi a =
   vec2
-    ( cos phi * (x_ a)
+    ( cos phi * x_ a
         + sin phi * (y_ a)
     , (-1) * sin phi * (x_ a)
         + cos phi * (y_ a)

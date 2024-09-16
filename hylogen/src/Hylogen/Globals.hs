@@ -1,7 +1,9 @@
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TypeOperators #-}
+{-# LANGUAGE TypeSynonymInstances #-}
 {-# LANGUAGE NoMonomorphismRestriction #-}
 
 module Hylogen.Globals where
@@ -71,11 +73,18 @@ floor_ = op1pre'' "floor"
 ceil_ :: forall n. (Veccable n) => Vec n -> Vec n
 ceil_ = op1pre'' "ceil"
 
-min_ :: forall n. (Veccable n) => Vec n -> Vec n -> Vec n
-min_ = op2pre'' "min"
+class Comparable a where
+  min_ :: a -> a -> a
+  max_ :: a -> a -> a
 
-max_ :: forall n. (Veccable n) => Vec n -> Vec n -> Vec n
-max_ = op2pre'' "max"
+instance (Comparable b) => Comparable (a -> b) where
+  min_ f g x = min_ (f x) (g x)
+  max_ f g x = max_ (f x) (g x)
+
+instance (Veccable n) => Comparable (Vec n) where
+  min_ = op2pre'' "min"
+
+  max_ = op2pre'' "max"
 
 {- | Clamps x between min and max
 
@@ -149,13 +158,16 @@ sel a b c = Expr t (Tree (Select, toGLSLType t, "") [toMono a, toMono b, toMono 
  where
   t = tag :: a
 
+branch :: (ToGLSLType a) => Booly -> Expr a -> Expr a -> Expr a
+branch = sel
+
 ------------------------------------------------------------
 
 {- | Conditional expressions
   Syntax sugar for `sel`:
   `cond ? ifTrue :? ifFalse`
 -}
-(?) :: (ToGLSLType a, Expr a ~ e) => Booly -> (e, e) -> e
+(?) :: (ToGLSLType a, e ~ Expr a) => Booly -> (e, e) -> e
 cond ? (ifTrue, ifFalse) = sel cond ifTrue ifFalse
 
 and_ :: Booly -> Booly -> Booly

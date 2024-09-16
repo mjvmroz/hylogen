@@ -72,9 +72,22 @@ instance (Veccable n) => Num (Vec n) where
   negate = op1 "-"
   fromInteger x = copy . uniform . show $ (fromInteger x :: Float)
 
+instance (Num (Vec n)) => Num (Vec n -> Vec n) where
+  f + g = \x -> f x + g x
+  f - g = \x -> f x - g x
+  f * g = \x -> f x * g x
+  abs f = abs . f
+  signum f = signum . f
+  negate f = negate . f
+  fromInteger = const . fromInteger
+
 instance (Veccable n) => Fractional (Vec n) where
   (/) = op2' "/"
   fromRational x = copy . uniform . show $ (fromRational x :: Float)
+
+instance (Fractional (Vec n)) => Fractional (Vec n -> Vec n) where
+  f / g = \x -> f x / g x
+  fromRational = const . fromRational
 
 instance (Veccable n) => Floating (Vec n) where
   -- pi = copy $ uniform "pi"
@@ -95,6 +108,25 @@ instance (Veccable n) => Floating (Vec n) where
   asinh x = log $ x + sqrt (x ** 2 + 1)
   acosh x = log $ x + sqrt (x ** 2 - 1)
   atanh x = 0.5 * log ((1 + x) / (1 - x))
+
+instance (Floating (Vec n)) => Floating (Vec n -> Vec n) where
+  exp f = exp . f
+  log f = log . f
+  sqrt f = sqrt . f
+  sin f = sin . f
+  cos f = cos . f
+  tan f = tan . f
+  asin f = asin . f
+  acos f = acos . f
+  atan f = atan . f
+  sinh f = sinh . f
+  cosh f = cosh . f
+  tanh f = tanh . f
+  asinh f = asinh . f
+  acosh f = acosh . f
+  atanh f = atanh . f
+  pi = const pi
+  (**) f g x = f x ** g x
 
 instance (Veccable n) => AdditiveGroup (Vec n) where
   zeroV = 0
@@ -1193,6 +1225,10 @@ instance (Veccable n, n >= 2) => HasField "x" (Vec n) (Vec 1) where
 instance (Veccable n, n >= 2) => HasField "y" (Vec n) (Vec 1) where
   getField :: (Veccable n, n >= 2) => Vec n -> Vec 1
   getField = y_
+
+instance (Veccable n, n >= 2) => HasField "xy" (Vec n) (Vec 2) where
+  getField :: (Veccable n, n >= 2) => Vec n -> Vec 2
+  getField = xy_
 
 instance (Veccable n, n >= 3) => HasField "z" (Vec n) (Vec 1) where
   getField :: (Veccable n, n >= 3) => Vec n -> Vec 1
