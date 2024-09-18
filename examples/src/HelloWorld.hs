@@ -40,13 +40,13 @@ rot phi a =
         + cos phi * y_ a
     )
 
-{- | Tile a 3D space
+{- | Tile a rectilinear space in arbitrary dimensions
   - c: The size of the tile
   - p: The global position
   - Returns the tile-local position
 -}
-tesselate :: forall n. (Veccable n) => Vec n -> Vec n -> Vec n
-tesselate c p = mod_ (p + 0.5 * c) c - 0.5 * c
+tileRectilinear :: forall n. (Veccable n) => Vec n -> Vec n -> Vec n
+tileRectilinear c p = mod_ (p + 0.5 * c) c - 0.5 * c
 
 box :: Vec3 -> Vec3 -> Vec3 -> Vec1
 box boxPos dim reference = len (max_ (abs (reference - boxPos) - dim) 0)
@@ -95,3 +95,9 @@ scene = raymarch fn
         , newDistCamera
         , newContinue
         )
+
+-- Framework ideas
+-- - Everything is structural by default, but classes can be used to define glsl functions.
+-- - Abstract loops. At the moment all loops get unrolled into glsl source, which is not ideal.
+-- - Dependency injection can be used to supply them, similarly with uniforms and variables.
+-- - Runtime validation can make sure that the names don't collide for multiple inferred glsl types as appropriate
