@@ -8,6 +8,7 @@ module HelloWorld where
 
 import Color qualified
 import Context qualified
+import Data.Boolean
 import Direction qualified
 import Hylogen.WithHylide
 import SDF qualified
@@ -18,7 +19,7 @@ output = toProgram scene
 sphere :: Vec3 -> Vec1 -> Vec3 -> Vec1
 sphere spherePos radius eyePos = len (eyePos - spherePos) - radius
 
-raymarch :: (Fractional iN, Num b2) => (iN -> (Vec3, b2, Booly) -> (Vec3, b2, Booly)) -> Vec4
+raymarch :: (Fractional iN, Num b2, Boolean b) => (iN -> (Vec3, b2, b) -> (Vec3, b2, b)) -> Vec4
 raymarch f =
   id
     . (\rgb -> vec4 (rgb, 1))

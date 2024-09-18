@@ -106,12 +106,6 @@ mix p x y = x ^* (1 - p) + y ^* p
 mix :: (Veccable n) => Vec1 -> Vec n -> Vec n -> Vec n
 mix p x y = op3pre "mix" x y p
 
-true :: Booly
-true = uniform "true"
-
-false :: Booly
-false = uniform "false"
-
 -- | Helper function to compare vectors
 bcomp :: (Veccable v) => String -> Vec v -> Vec v -> Booly
 bcomp str x y = product $ zipWith (op2' str) (toList x) (toList y)

@@ -26,6 +26,7 @@ library:
     - Hylogen.WithHylide.Util
   dependencies:
     - base >=4.8 && <5
+    - Boolean
     - vector-space
 
 executables:
