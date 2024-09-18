@@ -92,8 +92,8 @@ scene = raymarch fn
         distObject = sdf . preprocessPerspective . sample $ distCamera
 
         objColor = (mix iN (vec3 (0.4, 0, 0.2)) (Color.white ^* 0.9))
-        newColor = branch (continue * hitObject) objColor color
-        newContinue = continue * (not_ hitObject)
+        newColor = branch (continue &&* hitObject) objColor color
+        newContinue = continue &&* (not_ hitObject)
         newDistCamera = branch newContinue (distCamera + distObject) distCamera
 
         hitObject = distObject `lt` 0.001
