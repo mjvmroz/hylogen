@@ -31,14 +31,17 @@ raymarch f =
   maxSteps :: Integer
   maxSteps = 64
 
-rot :: Vec1 -> Vec2 -> Vec2
-rot phi a =
+rot2D :: Vec1 -> Vec2 -> Vec2
+rot2D phi a =
   vec2
     ( cos phi * x_ a
         + sin phi * y_ a
-    , (-1) * sin phi * x_ a
+    , -(sin phi * x_ a)
         + cos phi * y_ a
     )
+
+rotXY :: Vec1 -> Vec3 -> Vec3
+rotXY phi p = vec3 (rot2D phi p.xy, p.z)
 
 {- | Tile a rectilinear space in arbitrary dimensions
   - c: The size of the tile
@@ -62,16 +65,19 @@ scene = raymarch fn
     let
       -- These are total guesses based on observation.
       focalLength = 35
-      eye = focalLength / 35 * Direction.backward
-      frame = Direction.right ^* uvN.x + Direction.up ^* uvN.y
-      preprocessRay p = vec3 (rot (time * 0.4) p.xy, p.z)
+      focalDistance = focalLength / 35 * Direction.backward
+      frame = (vec3 (uvN.xy, 0))
      in
-      normalize . preprocessRay $ eye + frame
+      normalize $ frame + focalDistance
+  cameraMovement = rotXY (time * (-0.5)) (vec3 (0, 0, -time))
+  sample d =
+    rotXY
+      (time * 0.4)
+      (rayOrigin + cameraMovement + rayDirection ^* d)
 
   sdf :: Vec3 -> Vec1
-  sdf p =
+  sdf =
     let shapeOrigin = vec3 (sin time * 2, cos time * 2, -(3 + sin time * 0.1))
-        preprocessPerspective = tesselate 10
      in (box shapeOrigin 0.4) -- Hub
           `min_` (box shapeOrigin (vec3 (0.8, 0.2, 0.2))) -- X arm
           `min_` (box shapeOrigin (vec3 (10, 0.05, 0.05))) -- X spindle
@@ -79,11 +85,10 @@ scene = raymarch fn
           `min_` (box shapeOrigin (vec3 (0.05, 10, 0.05))) -- Y spindle
           `min_` (box shapeOrigin (vec3 (0.2, 0.2, 0.8))) -- Z arm
           `min_` (box shapeOrigin (vec3 (0.05, 0.05, 10))) -- Z spindle
-          $ (preprocessPerspective p)
   fn :: Vec1 -> (Vec3, Vec1, Booly) -> (Vec3, Vec1, Booly)
   fn iN (color, distCamera, continue) =
-    let p = rayOrigin + rayDirection ^* distCamera
-        distObject = sdf p
+    let preprocessPerspective = tileRectilinear 10
+        distObject = sdf . preprocessPerspective . sample $ distCamera
 
         objColor = (mix iN (vec3 (0.4, 0, 0.2)) (Color.white ^* 0.9))
         newColor = branch (continue * hitObject) objColor color
@@ -101,3 +106,4 @@ scene = raymarch fn
 -- - Abstract loops. At the moment all loops get unrolled into glsl source, which is not ideal.
 -- - Dependency injection can be used to supply them, similarly with uniforms and variables.
 -- - Runtime validation can make sure that the names don't collide for multiple inferred glsl types as appropriate
+-- - More typelevel representation of semantics, e.g. position, distance, color, direction
