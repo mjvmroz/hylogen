@@ -1,6 +1,6 @@
 dist/
 TAGS
-.stack-work/
+**/.stack-work/
 src/*.hs
 shader.glsl
 core

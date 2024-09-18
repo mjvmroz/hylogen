@@ -56,9 +56,11 @@ box :: Vec3 -> Vec3 -> Vec3 -> Vec1
 box boxPos dim reference = len (max_ (abs (reference - boxPos) - dim) 0)
 
 scene :: Vec4
-scene = raymarch fn
+scene = raymarch fn + blurryReflection
  where
   maxSteps = 64
+
+  blurryReflection = 0.2 * Context.bbSkew (\p -> vec2 (p.x + (sin time), p.y + (cos time)))
 
   -- Camera position
   rayOrigin = vec3 (0, 0, 0)
