@@ -18,6 +18,7 @@ Internal AST representation.
 module Hylogen.Expr where
 
 import Data.Reify
+import Data.Singletons
 
 -- | Internal type tag
 data GLSLType
@@ -95,7 +96,8 @@ class ToGLSLType ty where
   toGLSLType :: ty -> GLSLType
 
   -- | Singleton tag
-  tag :: ty -- TODO: fill in!
+  -- TODO: fill in!
+  tag :: ty
 
 -- | Uniform expression.
 uniform ::

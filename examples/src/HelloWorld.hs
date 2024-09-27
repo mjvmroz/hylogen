@@ -19,13 +19,13 @@ output = toProgram scene
 sphere :: Vec3 -> Vec1 -> Vec3 -> Vec1
 sphere spherePos radius eyePos = len (eyePos - spherePos) - radius
 
-raymarch :: (Fractional iN, Num b2, Boolean b) => (iN -> (Vec3, b2, b) -> (Vec3, b2, b)) -> Vec4
-raymarch f =
+raymarch :: (Fractional iN, Num dist, Boolean continue) => (iN -> (Vec3, dist, continue) -> (Vec3, dist, continue)) -> Vec4
+raymarch takeStep =
   id
     . (\rgb -> vec4 (rgb, 1))
     . (\(rgb, _distance, _continue) -> rgb)
     . foldr
-      (f . (/ fromInteger maxSteps) . fromInteger)
+      (takeStep . (/ fromInteger maxSteps) . fromInteger)
       (Color.black, 0, true)
     $ [1 .. maxSteps]
  where
@@ -35,10 +35,10 @@ raymarch f =
 rot2D :: Vec1 -> Vec2 -> Vec2
 rot2D phi a =
   vec2
-    ( cos phi * x_ a
-        + sin phi * y_ a
-    , -(sin phi * x_ a)
-        + cos phi * y_ a
+    ( cos phi * a.x
+        + (sin phi * a.y)
+    , cos phi * a.y
+        - (sin phi * a.x)
     )
 
 rotXY :: Vec1 -> Vec3 -> Vec3
@@ -58,8 +58,6 @@ box boxPos dim reference = len (max_ (abs (reference - boxPos) - dim) 0)
 scene :: Vec4
 scene = raymarch fn + blurryReflection
  where
-  maxSteps = 64
-
   blurryReflection = 0.2 * Context.bbSkew (\p -> vec2 (p.x + (sin time), p.y + (cos time)))
 
   -- Camera position
