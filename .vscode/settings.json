@@ -4,7 +4,7 @@
   "direnv.watchForChanges": true,
   "haskell.manageHLS": "PATH",
   "haskell.serverExecutablePath": "haskell-language-server-wrapper",
-  "haskell.formattingProvider": "fourmolu",
+  "haskell.formattingProvider": "ormolu",
   "editor.formatOnSave": true,
   "search.useIgnoreFiles": true
 }
