@@ -32,5 +32,5 @@ v = gate 0 0.1 (f $ y_ uvN + time / 2)
 
 f x =
   x
-    & (\x -> x * y_ uvN * 1)
+    & (\x -> x * y_ uvN)
     & (rep 0.5)

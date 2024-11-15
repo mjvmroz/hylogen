@@ -481,7 +481,7 @@ gameOfLifeAudio = vec4 (v, v, v, 1) * vec4 (c, c, c, 1)
     shift = vec2 (0, 0)
 
     maxi = downsample res $ shift + size / res
-    mini = downsample res $ shift + (negate $ size / res)
+    mini = downsample res $ shift - (size / res)
 
     size = vec2 (z_ audio - 0.5, w_ audio) * 500
 
@@ -520,7 +520,7 @@ gameOfLifeAudio = vec4 (v, v, v, 1) * vec4 (c, c, c, 1)
 
         wasAlive = val `gt` 0
           where
-            val = x_ $ texture2D backBuffer $ (uvN * 0.5 + 0.5)
+            val = x_ $ texture2D backBuffer (uvN * 0.5 + 0.5)
 
         rule1 = wasAlive * ((numAlive `eq` 2) + (numAlive `eq` 3))
         rule3 = negate wasAlive * numAlive `eq` 3
@@ -770,7 +770,7 @@ rclogo9 = logo
     -- rotColor x = vec4 (vec3 (z_ x, x_ x, y_ x), w_ x)
     rotColor x = vec4 (vec3 (z_ x, x_ x, y_ x), w_ x)
     fade x = x ** 0.9
-    stuff = texture2D channel1 (f $ uvN)
+    stuff = texture2D channel1 (f uvN)
     f =
       id
         >>> (\x -> vec2 (x_ x, x & y_ & negate))
@@ -800,7 +800,7 @@ rclogo10 = logo
         (fade bb)
     rotColor x = vec4 (vec3 (z_ x, x_ x, y_ x), w_ x)
     fade x = x ** 0.9
-    stuff = texture2D channel1 (f $ uvN)
+    stuff = texture2D channel1 (f uvN)
     f =
       id
         >>> (\x -> vec2 (x_ x, x & y_ & negate))
@@ -830,10 +830,10 @@ rclogo11 = logo
       sel
         (f uvN `lt` 1 * f uvN `gt` (-1))
         (mix (w_ stuff) stuff bb)
-        (fade $ bb)
+        (fade bb)
     rotColor x = vec4 (vec3 (z_ x, x_ x, y_ x), w_ x)
     fade x = x ** 0.8
-    stuff = texture2D channel1 (f $ uvN)
+    stuff = texture2D channel1 (f uvN)
     f =
       id
         >>> (\x -> vec2 (x_ x, x & y_ & negate))
@@ -863,10 +863,10 @@ rclogo12 = logo
       sel
         (f uvN `lt` 1 * f uvN `gt` (-1))
         (mix (w_ stuff) stuff bb)
-        (fade $ bb)
+        (fade bb)
     rotColor x = vec4 (vec3 (z_ x, x_ x, y_ x), w_ x)
     fade x = x ** 0.8
-    stuff = texture2D channel1 (f $ uvN) * vec4 (v, v, v, 1)
+    stuff = texture2D channel1 (f uvN) * vec4 (v, v, v, 1)
       where
         v =
           y_ uvN
@@ -900,10 +900,10 @@ rclogo13 = logo
       sel
         (f uvN `lt` 1 * f uvN `gt` (-1))
         (mix (w_ stuff) stuff bb)
-        (fade $ bb)
+        (fade bb)
     rotColor x = vec4 (vec3 (z_ x, x_ x, y_ x), w_ x)
     fade x = x ** 0.8
-    stuff = texture2D channel1 (f $ uvN) * vec4 (v, v, v, 1)
+    stuff = texture2D channel1 (f uvN) * vec4 (v, v, v, 1)
       where
         v =
           y_ uvN
@@ -939,11 +939,11 @@ rclogo14 = logo
       sel
         (f uvN `lt` 1 * f uvN `gt` (-1))
         (mix (w_ stuff) stuff bb)
-        (fade $ bb)
+        (fade bb)
     rotColor x = vec4 (vec3 (z_ x, x_ x, y_ x), w_ x)
     fade x = x ** 0.8
     stuff =
-      texture2D channel1 (f $ uvN)
+      texture2D channel1 (f uvN)
         * vec4 (v1, v1, v1, 1)
 
     v1 = v (w_ audio * 10)
@@ -1092,7 +1092,7 @@ rclogo17 = logo
     rotColor x = vec4 (vec3 (1 - y_ x, z_ x, 1 - x_ x), w_ x)
     fade x = x ** 0.8
     stuff =
-      texture2D channel1 (f $ uvN)
+      texture2D channel1 (f uvN)
         * vec4 (v1, v1, v1, 1)
 
     v1 = v (w_ audio * 10)
@@ -1140,7 +1140,7 @@ rclogo18 = logo
         (fade bb)
     rotColor x = vec4 (vec3 (z_ x, x_ x, y_ x), w_ x)
     fade x = x ** 0.90
-    stuff = texture2D channel1 (f $ uvN)
+    stuff = texture2D channel1 (f uvN)
     f =
       id
         >>> (\x -> vec2 (x_ x, x & y_ & negate))
@@ -1183,7 +1183,9 @@ rclogo19 = logosAndTrip
             >>> (\x -> x * 0.5 + 0.5)
         m = 0.5 + x_ audio
     logos =
-      foldl (\x y -> mix (w_ y) (y) (x)) 0 $
+      foldl
+        (\x y -> mix (w_ y) (y) (x))
+        0
         [ logo (-1),
           logo 0,
           logo 1
@@ -1202,7 +1204,7 @@ rclogo19 = logosAndTrip
           where
             f =
               id
-                >>> (\v -> v + input)
+                >>> (+ input)
                 >>> (\v -> vec2 (x_ v, negate $ y_ v))
                 >>> (rot t)
                 >>> (\x -> x ^* (x_ audio * (5 + n * 2)))
@@ -1210,7 +1212,7 @@ rclogo19 = logosAndTrip
               id
                 >>> (\x -> x * 0.5 + 0.5)
                 >>> (fract)
-                >>> (\x -> x * 5)
+                >>> (* 5)
             t = sin (time * 0.5) * 0.5
 
 over :: Vec4 -> Vec4 -> Vec4
@@ -1226,7 +1228,8 @@ fresh = color `over` bb
     color = sel (abs uvN `lt` 0.5) (vec4 (1, 1, 1, 1)) (vec4 (0, 0, 0, 1))
     f =
       id
-        >>> (\x -> x * 0.9)
+        >>> (* 0.9)
         >>> (\x -> x * 0.5 + 0.5)
+        >>> (* 0.9)
 
 output = toProgram fresh

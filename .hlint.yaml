@@ -1,3 +1,4 @@
 - ignore: { name: Use newtype instead of data }
 - ignore: { name: Redundant id }
 - ignore: { name: Redundant bracket }
+- ignore: { name: Use sqrt } # On the GPU, sqrt is faster than **0.5

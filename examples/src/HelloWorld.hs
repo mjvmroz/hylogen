@@ -45,10 +45,15 @@ rotXY :: Vec1 -> Vec3 -> Vec3
 rotXY phi p = vec3 (rot2D phi p.xy, p.z)
 
 -- | Tile a rectilinear space in arbitrary dimensions
---  - c: The size of the tile
---  - p: The global position
---  - Returns the tile-local position
-tileRectilinear :: forall n. (Veccable n) => Vec n -> Vec n -> Vec n
+tileRectilinear ::
+  forall n.
+  (Veccable n) =>
+  -- | c: The size of the tile
+  Vec n ->
+  -- | p: The global position
+  Vec n ->
+  -- | Returns the tile-local position
+  Vec n
 tileRectilinear c p = mod_ (p + 0.5 * c) c - 0.5 * c
 
 box :: Vec3 -> Vec3 -> Vec3 -> Vec1
