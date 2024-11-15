@@ -3,7 +3,6 @@
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TypeOperators #-}
-{-# LANGUAGE TypeSynonymInstances #-}
 {-# LANGUAGE NoMonomorphismRestriction #-}
 
 module Hylogen.Globals where
@@ -28,32 +27,29 @@ normalize = op1pre'' "normalize"
 smoothstep :: Vec1 -> Vec1 -> Vec1 -> Vec1
 smoothstep = op3pre'' "smoothstep"
 
-{- | Returns a vector pointing in the same direction as another
-
-@
-faceforward toOrient incident reference  -- == oriented
-@
--}
+-- | Returns a vector pointing in the same direction as another
+--
+-- @
+-- faceforward toOrient incident reference  -- == oriented
+-- @
 faceForward :: forall n. (Veccable n) => Vec n -> Vec n -> Vec n -> Vec n
 faceForward = op3pre'' "faceforward"
 
-{- | Calculates the reflection direction for an incident vector
-
-@
-reflect incident normal -- == reflected
-@
--}
+-- | Calculates the reflection direction for an incident vector
+--
+-- @
+-- reflect incident normal -- == reflected
+-- @
 reflect :: forall n. (Veccable n) => Vec n -> Vec n -> Vec n
 reflect = op2pre'' "reflect"
 
-{- | Calculates the refraction direction direction for an incident vector
-
-@
-refract incident normal eta -- == reflected
-@
-
-where eta is the ratio of indicies of refraction
--}
+-- | Calculates the refraction direction direction for an incident vector
+--
+-- @
+-- refract incident normal eta -- == reflected
+-- @
+--
+-- where eta is the ratio of indicies of refraction
 refract :: forall n. (Veccable n) => Vec n -> Vec n -> Vec1 -> Vec n
 refract = op3pre "refract"
 
@@ -77,6 +73,18 @@ class Comparable a where
   min_ :: a -> a -> a
   max_ :: a -> a -> a
 
+-- | Returns the minimum of n values
+--
+--   WARNING: This function is non-total (@minOf [] = undefined@)
+minOf_ :: (Comparable a) => [a] -> a
+minOf_ = foldl1 min_
+
+-- | Returns the maximum of n values
+--
+--   WARNING: This function is non-total (@maxOf [] = undefined@)
+maxOf_ :: (Comparable a) => [a] -> a
+maxOf_ = foldl1 max_
+
 instance (Comparable b) => Comparable (a -> b) where
   min_ f g x = min_ (f x) (g x)
   max_ f g x = max_ (f x) (g x)
@@ -86,23 +94,21 @@ instance (Veccable n) => Comparable (Vec n) where
 
   max_ = op2pre'' "max"
 
-{- | Clamps x between min and max
-
-@
-clamp min max x -- == clamped
-@
--}
+-- | Clamps x between min and max
+--
+-- @
+-- clamp min max x -- == clamped
+-- @
 clamp :: forall n. (Veccable n) => Vec n -> Vec n -> Vec n -> Vec n
 clamp mn mx x = op3pre'' "clamp" x mn mx
 
-{- | Linear interpolation between x and y by p, a Vec1 from 0 to 1
-
-@
-mix p x y = x ^* (1 - p) + y ^* p
--- mix 0 x y == x
--- mix 1 x y == y
-@
--}
+-- | Linear interpolation between x and y by p, a Vec1 from 0 to 1
+--
+-- @
+-- mix p x y = x ^* (1 - p) + y ^* p
+-- -- mix 0 x y == x
+-- -- mix 1 x y == y
+-- @
 mix :: (Veccable n) => Vec1 -> Vec n -> Vec n -> Vec n
 mix p x y = op3pre "mix" x y p
 
@@ -128,19 +134,17 @@ leq = bcomp "<="
 geq :: (Veccable v) => Vec v -> Vec v -> Booly
 geq = bcomp ">="
 
-{- | Returns rgba value given a texture and texture coordinates
-texture coordinates start at 0 1
--}
+-- | Returns rgba value given a texture and texture coordinates
+-- texture coordinates start at 0 1
 texture2D :: Texture -> Vec2 -> Vec4
 texture2D = op2pre "texture2D"
 
-{- | Selection function
-
-@ sel bool x y @
-is akin to
-
-@ bool ? x : y @ in C-like languages
--}
+-- | Selection function
+--
+-- @ sel bool x y @
+-- is akin to
+--
+-- @ bool ? x : y @ in C-like languages
 sel ::
   forall a.
   (ToGLSLType a) =>
@@ -149,18 +153,17 @@ sel ::
   Expr a ->
   Expr a
 sel a b c = Expr t (Tree (Select, toGLSLType t, "") [toMono a, toMono b, toMono c])
- where
-  t = tag :: a
+  where
+    t = tag :: a
 
 branch :: (ToGLSLType a) => Booly -> Expr a -> Expr a -> Expr a
 branch = sel
 
 ------------------------------------------------------------
 
-{- | Conditional expressions
-  Syntax sugar for `sel`:
-  `cond ? ifTrue :? ifFalse`
--}
+-- | Conditional expressions
+--  Syntax sugar for `sel`:
+--  `cond ? ifTrue :? ifFalse`
 (?) :: (ToGLSLType a, e ~ Expr a) => Booly -> (e, e) -> e
 cond ? (ifTrue, ifFalse) = sel cond ifTrue ifFalse
 

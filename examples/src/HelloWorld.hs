@@ -56,8 +56,8 @@ tileRectilinear ::
   Vec n
 tileRectilinear c p = mod_ (p + 0.5 * c) c - 0.5 * c
 
-box :: Vec3 -> Vec3 -> Vec3 -> Vec1
-box boxPos dim reference = len (max_ (abs (reference - boxPos) - dim) 0)
+cube :: Vec3 -> Vec3 -> Vec3 -> Vec1
+cube boxPos dim reference = len (max_ (abs (reference - boxPos) - dim) 0)
 
 scene :: Vec4
 scene = raymarch fn + 0.1 * blurryReflection
@@ -73,21 +73,21 @@ scene = raymarch fn + 0.1 * blurryReflection
           frame = (vec3 (uvN.xy, 0))
        in normalize $ frame + focalDistance
     cameraMovement = rotXY (time * (-0.5)) (vec3 (0, 0, -time))
-    sample d =
-      rotXY
-        (time * 0.4)
-        (rayOrigin + cameraMovement + rayDirection ^* d)
+    rotateCamera = rotXY $ time * 0.4
+    sample distance = rotateCamera $ rayOrigin + cameraMovement + rayDirection ^* distance
 
     sdf :: Vec3 -> Vec1
     sdf =
       let shapeOrigin = vec3 (sin time * 2, cos time * 2, -(3 + sin time * 0.1))
-       in (box shapeOrigin 0.4) -- Hub
-            `min_` (box shapeOrigin (vec3 (0.8, 0.2, 0.2))) -- X arm
-            `min_` (box shapeOrigin (vec3 (10, 0.05, 0.05))) -- X spindle
-            `min_` (box shapeOrigin (vec3 (0.2, 0.8, 0.2))) -- Y arm
-            `min_` (box shapeOrigin (vec3 (0.05, 10, 0.05))) -- Y spindle
-            `min_` (box shapeOrigin (vec3 (0.2, 0.2, 0.8))) -- Z arm
-            `min_` (box shapeOrigin (vec3 (0.05, 0.05, 10))) -- Z spindle
+       in minOf_
+            [ (sphere shapeOrigin 0.7), -- Hub
+              (cube shapeOrigin (vec3 (0.8, 0.2, 0.2))), -- X arm
+              (cube shapeOrigin (vec3 (10, 0.05, 0.05))), -- X spindle
+              (cube shapeOrigin (vec3 (0.2, 0.8, 0.2))), -- Y arm
+              (cube shapeOrigin (vec3 (0.05, 10, 0.05))), -- Y spindle
+              (cube shapeOrigin (vec3 (0.2, 0.2, 0.8))), -- Z arm
+              (cube shapeOrigin (vec3 (0.05, 0.05, 10))) -- Z spindle
+            ]
     fn :: Vec1 -> (Vec3, Vec1, Booly) -> (Vec3, Vec1, Booly)
     fn iN (color, distCamera, continue) =
       let preprocessPerspective = tileRectilinear 10
@@ -99,7 +99,8 @@ scene = raymarch fn + 0.1 * blurryReflection
           -- Floating points suck, and we can improve things by going only part of the
           -- way to the object. This introduces a kind of "darkness creep": a fog which
           -- is not present in the scene, but which effectively causes light to decay
-          -- as it travels through it.
+          -- as it travels through it. The "darkness cost" of decreasing the undershoot
+          -- factor can be balanced by increasing the number of steps in the raymarch.
           undershootDist = distObject * 0.98
           newDistCamera = branch newContinue (distCamera + undershootDist) distCamera
 
