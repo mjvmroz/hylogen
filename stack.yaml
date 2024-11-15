@@ -1,8 +1,14 @@
-resolver: lts-22.34
+resolver: lts-21.4
 packages:
-- 'hylogen'
-- 'hylide'
-- 'examples'
+  - "hylogen"
+  - "hylide"
+  - "examples"
 extra-deps: []
 flags: {}
 extra-package-dbs: []
+#
+nix:
+  enable: true
+  packages: [zlib, glpk, pcre]
+# shell-file: stack-shell.nix
+# # So let's do this instead. We'll get it from our devenv shell

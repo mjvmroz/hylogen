@@ -1,9 +1,6 @@
 cradle:
   stack:
-    - path: "examples/./"
-      component: "examples:lib"
-
-    - path: "examples/./"
+    - path: "examples/src"
       component: "examples:lib"
 
     - path: "hylide/src"

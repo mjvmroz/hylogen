@@ -1,0 +1,10 @@
+{
+  "nixEnvSelector.nixFile": "${workspaceFolder}/.devenv.flake.nix",
+  "direnv.restart.automatic": true,
+  "direnv.watchForChanges": true,
+  "haskell.manageHLS": "PATH",
+  "haskell.serverExecutablePath": "haskell-language-server-wrapper",
+  "haskell.formattingProvider": "fourmolu",
+  "editor.formatOnSave": true,
+  "search.useIgnoreFiles": true
+}

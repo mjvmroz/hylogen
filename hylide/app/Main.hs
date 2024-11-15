@@ -5,26 +5,23 @@
 {-# LANGUAGE OverloadedStrings #-}
 
 import Control.Concurrent (forkIO, killThread)
+import Control.Exception qualified as E
 import Control.Monad (void)
 import Data.Aeson (FromJSON, ToJSON, encode)
 import Data.ByteString.Lazy.Char8 qualified as LBS8
-import GHC.Generics (Generic)
-import Paths_hylide (getDataFileName)
-
+import Data.Functor
 import Data.Text qualified as T
-import Network.WebSockets qualified as S
-import System.Environment qualified as Env
-import System.Exit (ExitCode (ExitFailure, ExitSuccess))
-import System.FSNotify
-import System.FilePath
-
+import GHC.Generics (Generic)
+import Language.Haskell.Interpreter qualified as I
 import Network.HTTP.Types (status200, status404)
 import Network.Wai
 import Network.Wai.Handler.Warp
-
-import Control.Exception qualified as E
-import Data.Functor
-import Language.Haskell.Interpreter qualified as I
+import Network.WebSockets qualified as S
+import Paths_hylide (getDataFileName)
+import System.Environment qualified as Env
+import System.Exit (ExitCode (ExitFailure, ExitSuccess))
+import System.FSNotify (Event (Modified), WatchManager, watchDir, withManager)
+import System.FilePath
 
 data Msg
   = Err String
@@ -66,7 +63,7 @@ handleConnection pathToWatch mgr pending = do
 
   let onChange e = do
         case e of
-          Modified{} -> update
+          Modified {} -> update
           _ -> return ()
   update
   _ <- watchDir mgr dirToWatch (const True) onChange

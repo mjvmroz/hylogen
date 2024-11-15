@@ -5,3 +5,6 @@ src/*.hs
 shader.glsl
 core
 **/*.cabal
+.devenv
+.direnv
+.pre-commit-config.yaml
